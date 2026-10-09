@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Saborhythm Cloud v1.0.0 | 株式会社虚無システムズ</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- FAKE BSOD OVERLAY -->
+<div id="bsod-overlay" class="bsod-overlay" role="dialog" aria-modal="true">
+  <!-- Windows mode -->
+  <div id="bsod-win" class="bsod-content">
+    <div class="bsod-face">:(</div>
+    <div class="bsod-title">あなたのPCは問題が発生しました</div>
+    <div class="bsod-msg">重大なシステムエラーが検出されました。<br>IT部門に連絡しつつ、その間は離席が推奨されます。<br><br>エラーコード: <strong>CRITICAL_WORK_PROCESS_DIED (0xC000SABO)</strong></div>
+    <div class="bsod-progress-wrap">
+      <div class="bsod-progress-label">完了率 <span id="bsod-pct">0</span>%</div>
+      <div class="bsod-progress-bar"><div id="bsod-bar" class="bsod-bar-fill"></div></div>
+    </div>
+    <div style="margin-bottom:16px;">
+      <div style="display:inline-grid;grid-template-columns:repeat(10,6px);gap:1px;" id="bsod-qr"></div>
+    </div>
+    <div class="bsod-timer" id="bsod-timer">40:00</div>
+    <div class="bsod-timer-label">推奨離席時間（再起動完了まで）</div>
+    <div class="bsod-esc">ESC または Ctrl+Alt+Shift+S で解除</div>
+  </div>
+  <!-- Mac mode -->
+  <div id="bsod-mac" class="bsod-content mac-mode" style="display:none;">
+    <div class="bsod-face" style="font-size:60px;">🍎</div>
+    <div class="bsod-title" style="font-family:'Helvetica Neue',sans-serif;">カーネルパニック — PCを再起動する必要があります。</div>
+    <div class="mac-kernel" id="mac-kernel-log"></div>
+    <div class="bsod-progress-wrap">
+      <div class="bsod-progress-label">システム復旧中... <span id="bsod-pct-mac">0</span>%</div>
+      <div class="bsod-progress-bar"><div id="bsod-bar-mac" class="bsod-bar-fill" style="background:var(--accent-green);"></div></div>
+    </div>
+    <div class="bsod-timer" id="bsod-timer-mac">40:00</div>
+    <div class="bsod-timer-label">推奨離席時間（Appleに問い合わせ中）</div>
+    <div class="bsod-esc">ESC または Ctrl+Alt+Shift+S で解除</div>
+  </div>
+</div>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">S</div>
+    <div>
+      <div style="font-weight:800;font-size:14px;letter-spacing:0.5px;">Saborhythm</div>
+      <div style="font-size:10px;color:var(--text-muted);">Cloud v1.0.0</div>
+    </div>
+  </div>
+  <div class="sidebar-section-title">メインメニュー</div>
+  <ul class="sidebar-menu">
+    <li class="sidebar-item active" data-tab="dashboard" onclick="switchTab('dashboard',this)">
+      <span class="sidebar-icon">📊</span> ダッシュボード
+    </li>
+    <li class="sidebar-item" data-tab="typing" onclick="switchTab('typing',this)">
+      <span class="sidebar-icon">⌨️</span> タイピング偽装
+    </li>
+    <li class="sidebar-item" data-tab="slack" onclick="switchTab('slack',this)">
+      <span class="sidebar-icon">💬</span> Synergy-AI Bot
+    </li>
+    <li class="sidebar-item" data-tab="bsod" onclick="switchTab('bsod',this)">
+      <span class="sidebar-icon">🔵</span> 緊急BSOD
+    </li>
+    <li class="sidebar-item" data-tab="zoom" onclick="switchTab('zoom',this)">
+      <span class="sidebar-icon">📹</span> Zoom ARフィルター
+    </li>
+    <li class="sidebar-item" data-tab="requirements" onclick="switchTab('requirements',this)">
+      <span class="sidebar-icon">📄</span> 要件定義書
+    </li>
+  </ul>
+  <div class="sidebar-section-title">プラグイン</div>
+  <ul class="sidebar-menu">
+    <li class="sidebar-item" onclick="showPluginAlert()">
+      <span class="sidebar-icon">🤡</span> 無能偽装プラグイン
+      <span class="badge badge-yellow" style="margin-left:auto;font-size:9px;">有料</span>
+    </li>
+    <li class="sidebar-item" onclick="showPluginAlert()">
+      <span class="sidebar-icon">🛡️</span> 証跡隠滅モジュール
+      <span class="badge badge-red" style="margin-left:auto;font-size:9px;">β</span>
+    </li>
+  </ul>
+  <div style="position:absolute;bottom:20px;left:0;right:0;padding:0 16px;">
+    <div style="background:rgba(255,59,92,0.1);border:1px solid rgba(255,59,92,0.3);border-radius:8px;padding:10px;font-size:11px;color:var(--accent-red);text-align:center;">
+      ⚠️ 上司接近アラート<br><span style="color:var(--text-muted);font-size:10px;">センサー待機中...</span>
+    </div>
+  </div>
+</nav>
+
+<!-- MAIN CONTENT -->
+<main class="main-content">
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div>
+      <div style="font-size:18px;font-weight:800;" id="page-title">ダッシュボード</div>
+      <div style="font-size:11px;color:var(--text-muted);" id="page-subtitle">本日のサボり効率レポート</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:16px;">
+      <div style="font-size:12px;color:var(--text-muted);" id="current-time"></div>
+      <div style="background:rgba(0,255,136,0.1);border:1px solid var(--accent-green);border-radius:6px;padding:5px 12px;font-size:12px;color:var(--accent-green);">
+        ● システム稼働中
+      </div>
+      <div style="width:32px;height:32px;border-radius:50%;background:var(--accent-blue);display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer;">👤</div>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div id="tab-dashboard" class="tab-content active">
+    <!-- KPI -->
+    <div class="kpi-grid">
+      <div class="card kpi-card">
+        <div class="kpi-label">本日のサボり時間</div>
+        <div class="kpi-value" id="kpi-sabo-time">0:00</div>
+        <div class="kpi-change up">↑ 前日比 +23%</div>
+      </div>
+      <div class="card kpi-card">
+        <div class="kpi-label">偽タイピング回数</div>
+        <div class="kpi-value" id="kpi-type-count">0</div>
+        <div class="kpi-change up">↑ 今日も絶好調</div>
+      </div>
+      <div class="card kpi-card">
+        <div class="kpi-label">Slack自動返信数</div>
+        <div class="kpi-value" id="kpi-slack-count">0</div>
+        <div class="kpi-change up">↑ シナジー最大化</div>
+      </div>
+      <div class="card kpi-card">
+        <div class="kpi-label">BSOD発動回数</div>
+        <div class="kpi-value" id="kpi-bsod-count">0</div>
+        <div class="kpi-change" style="color:var(--accent-yellow);">→ 安定稼働中</div>
+      </div>
+    </div>
+
+    <!-- CHART ROW -->
+    <div class="card-row">
+      <div class="card" style="flex:2;">
+        <div class="card-title">📈 サボり効率トレンド（リアルタイム解析）</div>
+        <canvas id="main-chart" height="140"></canvas>
+      </div>
+      <div class="card" style="flex:1;">
+        <div class="card-title">🍩 時間配分ドーナツ</div>
+        <canvas id="donut-chart" height="140"></canvas>
+        <div style="margin-top:12px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:12px;color:var(--text-secondary);">
+            <span style="width:10px;height:10px;border-radius:50%;background:#ff3b5c;display:inline-block;"></span>実際の作業 (12%)
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:12px;color:var(--text-secondary);">
+            <span style="width:10px;height:10px;border-radius:50%;background:#1a6cf0;display:inline-block;"></span>偽装タイピング (33%)
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-secondary);">
+            <span style="width:10px;height:10px;border-radius:50%;background:#00ff88;display:inline-block;"></span>有益なサボり (55%)
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="card">
+      <div class="card-title">📋 本日のアクティビティログ</div>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>時刻</th><th>イベント</th><th>モジュール</th><th>ステータス</th><th>効果</th>
+          </tr>
+        </thead>
+        <tbody id="activity-log">
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- TYPING TAB -->
+  <div id="tab-typing" class="tab-content">
+    <div class="card-row">
+      <div class="card" style="flex:1;">
+        <div class="card-title">⌨️ 猛烈タイピング音シミュレーター</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:14px;">キーボードタイプを選択してください</div>
+        <div class="sound-btn-group">
+          <div class="sound-btn active" id="type-blue" onclick="selectKeyType('blue',this)">🔵 青軸<br><span style="font-size:10px;color:var(--text-muted);">うるさい系</span></div>
+          <div class="sound-btn" id="type-hhkb" onclick="selectKeyType('hhkb',this)">⌨ HHKB<br><span style="font-size:10px;color:var(--text-muted);">玄人風</span></div>
+          <div class="sound-btn" id="type-laptop" onclick="selectKeyType('laptop',this)">💻 ノートPC<br><span style="font-size:10px;color:var(--text-muted);">焦り系</span></div>
+        </div>
+        <div class="slider-row">
+          <label>ッターン！頻度</label>
+          <input type="range" min="1" max="10" value="5" id="enter-freq" oninput="updateSlider('enter-freq','enter-val')">
+          <span class="sv" id="enter-val">5</span>
+        </div>
+        <div class="slider-row">
+          <label>ため息頻度（3分毎）</label>
+          <input type="range" min="1" max="5" value="2" id="sigh-freq" oninput="updateSlider('sigh-freq','sigh-val')">
+          <span class="sv" id="sigh-val">2</span>
+        </div>
+        <div class="slider-row">
+          <label>タイピング速度</label>
+          <input type="range" min="1" max="10" value="7" id="type-speed" oninput="updateSlider('type-speed','speed-val')">
+          <span class="sv" id="speed-val">7</span>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:16px;">
+          <button class="btn btn-primary" id="typing-start-btn" onclick="toggleTyping()">▶ シミュレーション開始</button>
+          <button class="btn btn-secondary" onclick="triggerSigh()">💨 今すぐため息</button>
+        </div>
+      </div>
+      <div class="card" style="flex:1;">
+        <div class="card-title">🖥️ ライブプレビュー</div>
+        <div class="typing-visualizer" id="typing-viz">
+          <span id="typing-text"></span><span class="cursor"></span>
+          <div class="sigh-toast" id="sigh-toast">💨 はぁ…マジかよ…</div>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
+          <div class="card" style="flex:1;min-width:100px;padding:10px;text-align:center;">
+            <div style="font-size:22px;font-weight:800;color:var(--accent-blue);" id="viz-keycount">0</div>
+            <div style="font-size:10px;color:var(--text-muted);">打鍵数</div>
+          </div>
+          <div class="card" style="flex:1;min-width:100px;padding:10px;text-align:center;">
+            <div style="font-size:22px;font-weight:800;color:var(--accent-red);" id="viz-enter">0</div>
+            <div style="font-size:10px;color:var(--text-muted);">ッターン！回数</div>
+          </div>
+          <div class="card" style="flex:1;min-width:100px;padding:10px;text-align:center;">
+            <div style="font-size:22px;font-weight:800;color:var(--accent-yellow);" id="viz-sigh">0</div>
+            <div style="font-size:10px;color:var(--text-muted);">ため息回数</div>
+          </div>
+        </div>
+        <div style="margin-top:12px;">
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;">環境音レベル（VUメーター）</div>
+          <div style="display:flex;gap:2px;align-items:flex-end;height:40px;" id="vu-meter">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLACK TAB -->
+  <div id="tab-slack" class="tab-content">
+    <div class="card-row">
+      <div class="card" style="flex:1;">
+        <div class="card-title">💬 Synergy-AI 設定</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:14px;">自動返信テンプレートの重み設定</div>
+        <div style="margin-bottom:12px;">
+          <div class="slider-row">
+            <label style="width:auto;flex:1;">① アグリー・シナジー</label>
+            <input type="range" min="0" max="10" value="8" id="w1" oninput="updateSlider('w1','wv1')">
+            <span class="sv" id="wv1">8</span>
+          </div>
+          <div style="font-size:11px;color:var(--text-muted);padding-left:0;margin-bottom:8px;font-style:italic;">
+            「なるほど、アグリーです。一旦持ち帰ってシナジー確認します」
+          </div>
+          <div class="slider-row">
+            <label style="width:auto;flex:1;">② 本質的イシュー</label>
+            <input type="range" min="0" max="10" value="5" id="w2" oninput="updateSlider('w2','wv2')">
+            <span class="sv" id="wv2">5</span>
+          </div>
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;font-style:italic;">
+            「本質的なイシューはそこではない気がしています。追って壁打ちさせてください」
+          </div>
+          <div class="slider-row">
+            <label style="width:auto;flex:1;">③ 通信環境言い訳</label>
+            <input type="range" min="0" max="10" value="3" id="w3" oninput="updateSlider('w3','wv3')">
+            <span class="sv" id="wv3">3</span>
+          </div>
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;font-style:italic;">
+            「通信環境が極めて悪いため、テキストでROMります」
+          </div>
+        </div>
+        <div class="slider-row">
+          <label>返信遅延（分）</label>
+          <input type="range" min="1" max="15" value="5" id="slack-delay" oninput="updateSlider('slack-delay','delay-val')">
+          <span class="sv" id="delay-val">5</span>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:16px;">
+          <button class="btn btn-primary" onclick="triggerSlackMention()">📩 メンションをシミュレート</button>
+          <button class="btn btn-secondary" id="slack-auto-btn" onclick="toggleSlackAuto()">🤖 自動モード OFF</button>
+        </div>
+      </div>
+      <div class="card" style="flex:1;">
+        <div class="card-title">👀 Slack プレビュー</div>
+        <div class="slack-preview" id="slack-preview">
+          <div class="slack-msg">
+            <div class="slack-avatar">👔</div>
+            <div class="slack-body">
+              <div class="slack-name">田中部長 <span>本日 09:42</span></div>
+              <div class="slack-text"><span class="mention">@あなた</span> 昨日の件、進捗どうなってますか？</div>
+            </div>
+          </div>
+        </div>
+        <div class="delay-bar-wrap">
+          <div class="delay-bar-label">返信待機中... <span id="delay-remain">-</span></div>
+          <div class="delay-bar"><div class="delay-bar-fill" id="delay-fill"></div></div>
+        </div>
+        <div style="margin-top:12px;font-size:12px;color:var(--text-muted);">
+          自動返信履歴: <span id="slack-reply-count" style="color:var(--accent-blue);font-weight:700;">0</span> 件
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BSOD TAB -->
+  <div id="tab-bsod" class="tab-content">
+    <div class="card-row">
+      <div class="card" style="flex:1;">
+        <div class="card-title">🔵 緊急BSOD設定</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:14px;">
+          <span style="background:rgba(255,214,0,0.15);border:1px solid var(--accent-yellow);border-radius:4px;padding:3px 8px;color:var(--accent-yellow);font-size:11px;">
+            ⌨ Ctrl + Alt + Shift + S で即時発動
+          </span>
+        </div>
+        <div style="margin-bottom:16px;">
+          <div style="font-size:13px;font-weight:700;margin-bottom:8px;color:var(--text-primary);">偽装モード選択</div>
+          <div style="display:flex;gap:10px;">
+            <div class="sound-btn active" id="bsod-win-btn" onclick="selectBSOD('win',this)">🪟 Windows<br><span style="font-size:10px;color:var(--text<overlap>
+        <div class="sound-btn active" id="bsod-win-btn" onclick="selectBSOD('win',this)">🪟 Windows<br><span style="font-size:10px;color:var(--text
+</overlap>
+
+<continue>
+-muted);">BSOD</span></div>
+            <div class="sound-btn" id="bsod-mac-btn" onclick="selectBSOD('mac',this)">🍎 Mac<br><span style="font-size:10px;color:var(--text-muted);">カーネルパニック</span></div>
+          </div>
+        </div>
+        <div class="slider-row">
+          <label>フリーズ演技時間（分）</label>
+          <input type="range" min="5" max="40" value="20" id="bsod-time" oninput="updateSlider('bsod-time','bsod-time-val')">
+          <span class="sv" id="bsod-time-val">20</span>
+        </div>
+        <div class="slider-row" style="margin-top:10px;">
+          <label>進捗バー停止位置（%）</label>
+          <input type="range" min="60" max="99" value="89" id="bsod-prog" oninput="updateSlider('bsod-prog','bsod-prog-val')">
+          <span class="sv" id="bsod-prog-val">89</span>
+        </div>
+        <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;">
+          <button class="btn btn-danger" onclick="triggerBSOD()">🚨 今すぐ発動</button>
+          <button class="btn btn-secondary" onclick="testBSODPreview()">👁 プレビュー</button>
+        </div>
+        <div style="margin-top:14px;font-size:12px;color:var(--text-muted);background:rgba(255,68,68,0.07);border:1px solid rgba(255,68,68,0.2);border-radius:6px;padding:10px;">
+          ⚠️ <strong style="color:var(--accent-red);">緊急発動履歴:</strong> <span id="bsod-count" style="color:var(--accent-red);font-weight:700;">0</span> 回<br>
+          <span style="font-size:11px;">※ 同一週に3回以上の発動は「PCが壊れすぎ」と疑われるため非推奨</span>
+        </div>
+      </div>
+      <div class="card" style="flex:1.2;">
+        <div class="card-title">🖥 BSOD プレビュー</div>
+        <div id="bsod-preview-box" style="background:#000080;border-radius:8px;padding:28px 24px;font-family:'Courier New',monospace;color:#fff;min-height:220px;position:relative;overflow:hidden;">
+          <div style="font-size:13px;line-height:1.8;" id="bsod-preview-content">
+            <div style="font-size:22px;font-weight:900;margin-bottom:12px;">:(</div>
+            <div style="font-size:13px;margin-bottom:10px;">PCに問題が発生したため、再起動する必要があります。</div>
+            <div style="font-size:12px;color:#aad4ff;margin-bottom:16px;">エラー コード: CRITICAL_PROCESS_DIED<br>（詳細：本当に大変なことになっています）</div>
+            <div style="margin-bottom:8px;font-size:12px;">回復中... <span id="bsod-preview-pct">89</span>% 完了</div>
+            <div style="background:rgba(255,255,255,0.2);border-radius:3px;height:8px;width:100%;margin-bottom:14px;">
+              <div id="bsod-preview-bar" style="background:#fff;height:8px;border-radius:3px;width:89%;transition:width 0.3s;"></div>
+            </div>
+            <div style="font-size:10px;color:#aad4ff;">推定残り時間: <span id="bsod-remain-text">20分</span></div>
+          </div>
+        </div>
+        <div style="margin-top:10px;font-size:11px;color:var(--text-muted);text-align:center;">
+          ↑ Windows BSODプレビュー（Macモード選択で切り替わります）
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ZOOM TAB -->
+  <div id="tab-zoom" class="tab-content">
+    <div class="card-row">
+      <div class="card" style="flex:1;">
+        <div class="card-title">👁 Zoom ARフィルター設定</div>
+        <div style="margin-bottom:16px;">
+          <div style="font-size:13px;font-weight:700;margin-bottom:10px;color:var(--text-primary);">瞳充血レベル</div>
+          <div class="slider-row">
+            <label>充血度</label>
+            <input type="range" min="0" max="10" value="6" id="eye-red" oninput="updateSlider('eye-red','eye-red-val');updateEyeCanvas()">
+            <span class="sv" id="eye-red-val">6</span>
+          </div>
+        </div>
+        <div style="margin-bottom:16px;">
+          <div style="font-size:13px;font-weight:700;margin-bottom:10px;color:var(--text-primary);">うなずきマクロ</div>
+          <div class="slider-row">
+            <label>頻度（秒）</label>
+            <input type="range" min="5" max="60" value="15" id="nod-freq" oninput="updateSlider('nod-freq','nod-freq-val')">
+            <span class="sv" id="nod-freq-val">15</span>
+          </div>
+          <div class="slider-row">
+            <label>うなずき強度</label>
+            <input type="range" min="1" max="5" value="3" id="nod-power" oninput="updateSlider('nod-power','nod-power-val')">
+            <span class="sv" id="nod-power-val">3</span>
+          </div>
+        </div>
+        <div style="margin-bottom:16px;">
+          <div style="font-size:13px;font-weight:700;margin-bottom:10px;color:var(--text-primary);">表情プリセット</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <div class="sound-btn active" onclick="selectExpression('serious',this)">😐 真剣</div>
+            <div class="sound-btn" onclick="selectExpression('thinking',this)">🤔 検討中</div>
+            <div class="sound-btn" onclick="selectExpression('nodding',this)">🙂 同意</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;">
+          <button class="btn btn-primary" id="zoom-filter-btn" onclick="toggleZoomFilter()">▶ フィルター開始</button>
+          <button class="btn btn-secondary" onclick="triggerNod()">↕ 手動うなずき</button>
+        </div>
+      </div>
+      <div class="card" style="flex:1.2;">
+        <div class="card-title">📷 ARフィルタープレビュー</div>
+        <div style="position:relative;width:100%;padding-bottom:56.25%;background:#111;border-radius:8px;overflow:hidden;" id="zoom-preview-wrap">
+          <canvas id="zoom-canvas" style="position:absolute;top:0;left:0;width:100%;height:100%;"></canvas>
+          <div id="zoom-overlay-text" style="position:absolute;bottom:10px;left:10px;font-size:11px;color:rgba(255,255,255,0.6);font-family:monospace;">
+            AR Filter: ACTIVE | FPS: <span id="zoom-fps">30</span>
+          </div>
+          <div id="zoom-nod-indicator" style="position:absolute;top:10px;right:10px;font-size:11px;background:rgba(0,200,100,0.8);color:#fff;padding:3px 8px;border-radius:10px;display:none;">
+            うなずき中...
+          </div>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:16px;font-size:12px;">
+          <div>うなずき回数: <span id="nod-count" style="color:var(--accent-blue);font-weight:700;">0</span></div>
+          <div>フィルター稼働: <span id="zoom-uptime" style="color:var(--accent-green);font-weight:700;">00:00:00</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ANALYTICS TAB -->
+  <div id="tab-analytics" class="tab-content">
+    <div class="card-row">
+      <div class="card" style="flex:2;">
+        <div class="card-title">📊 サボり効率ダッシュボード（意味のある感じの分析）</div>
+        <canvas id="analytics-chart" height="200"></canvas>
+      </div>
+      <div class="card" style="flex:1;">
+        <div class="card-title">🏆 今週のサボりスコア</div>
+        <div style="text-align:center;padding:20px 0;">
+          <div style="font-size:64px;font-weight:900;color:var(--accent-blue);line-height:1;" id="sabo-score">847</div>
+          <div style="font-size:13px;color:var(--text-muted);margin-top:6px;">/ 1000 pt</div>
+          <div style="margin-top:12px;font-size:12px;color:var(--accent-green);">▲ 先週比 +12.4%</div>
+        </div>
+        <div style="border-top:1px solid var(--border);padding-top:14px;">
+          <div style="font-size:12px;font-weight:700;color:var(--text-secondary);margin-bottom:10px;">内訳</div>
+          <div class="stat-row-mini" style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+            <span>⌨ タイピング偽装</span><span style="color:var(--accent-blue);">234 pt</span>
+          </div>
+          <div class="stat-row-mini" style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+            <span>💬 Slack自動返信</span><span style="color:var(--accent-green);">189 pt</span>
+          </div>
+          <div class="stat-row-mini" style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+            <span>🔵 BSOD発動</span><span style="color:var(--accent-red);">312 pt</span>
+          </div>
+          <div class="stat-row-mini" style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0;">
+            <span>👁 Zoom偽装</span><span style="color:var(--accent-yellow);">112 pt</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-row">
+      <div class="card" style="flex:1;">
+        <div class="card-title">⚠️ リスクアラート</div>
+        <div id="risk-alerts">
+          <div style="background:rgba(255,214,0,0.1);border:1px solid rgba(255,214,0,0.3);border-radius:6px;padding:10px;margin-bottom:8px;font-size:12px;">
+            <strong style="color:var(--accent-yellow);">⚠ 警告</strong>: 今週のタイピング音量が昨週比300%増。上司に怪しまれるリスクあり。<br>
+            <span style="color:var(--text-muted);font-size:11px;">推奨: 音量を下げるか、わざとタイポを増やしてください</span>
+          </div>
+          <div style="background:rgba(0,200,100,0.1);border:1px solid rgba(0,200,100,0.3);border-radius:6px;padding:10px;margin-bottom:8px;font-size:12px;">
+            <strong style="color:var(--accent-green);">✅ 良好</strong>: Slack返信の文体が先週より15%「意識高め」に改善されました。
+          </div>
+          <div style="background:rgba(255,68,68,0.1);border:1px solid rgba(255,68,68,0.3);border-radius:6px;padding:10px;font-size:12px;">
+            <strong style="color:var(--accent-red);">🚨 危険</strong>: BSOD発動が今週すでに3回。IT部門が「PC交換」を提案し始める閾値に達しています。<br>
+            <span style="color:var(--text-muted);font-size:11px;">推奨: 今週はBSODを自制し、代わりに「Wi-Fi不安定言い訳」モードをご利用ください</span>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="flex:1;">
+        <div class="card-title">🎖 サボりランキング（社内匿名）</div>
+        <div id="ranking-list">
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;">
+            <span style="font-size:18px;">🥇</span>
+            <div style="flex:1;">
+              <div style="font-weight:700;">匿名ユーザー_7749</div>
+              <div style="font-size:11px;color:var(--text-muted);">エンジニア・5年目</div>
+            </div>
+            <span style="color:var(--accent-yellow);font-weight:900;">998 pt</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;">
+            <span style="font-size:18px;">🥈</span>
+            <div style="flex:1;">
+              <div style="font-weight:700;">匿名ユーザー_3312</div>
+              <div style="font-size:11px;color:var(--text-muted);">管理職・謎の肩書</div>
+            </div>
+            <span style="color:var(--text-secondary);font-weight:900;">954 pt</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;">
+            <span style="font-size:18px;">🥉</span>
+            <div style="flex:1;">
+              <div style="font-weight:700;">匿名ユーザー_0001</div>
+              <div style="font-size:11px;color:var(--text-muted);">新入社員・布団の中</div>
+            </div>
+            <span style="color:var(--accent-blue);font-weight:900;">923 pt</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 4px;font-size:13px;background:rgba(0,163,255,0.08);border-radius:6px;margin-top:4px;">
+            <span style="font-size:16px;">👤</span>
+            <div style="flex:1;">
+              <div style="font-weight:700;color:var(--accent-blue);">あなた（現在）</div>
+              <div style="font-size:11px;color:var(--text-muted);">ランキング: 4位</div>
+            </div>
+            <span style="color:var(--accent-blue);font-weight:900;" id="your-rank-score">847 pt</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FULL SCREEN BSOD OVERLAY -->
+<div id="bsod-overlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;z-index:99999;font-family:'Courier New',monospace;cursor:none;">
+  <!-- Windows BSOD -->
+  <div id="bsod-win" style="display:none;background:#0078D7;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;padding:40px;">
+    <div style="max-width:600px;width:100%;">
+      <div style="font-size:120px;line-height:1;margin-bottom:20px;">:(</div>
+      <div style="font-size:26px;font-weight:700;margin-bottom:16px;">PCに問題が発生したため、再起動する必要があります。</div>
+      <div style="font-size:15px;color:rgba(255,255,255,0.8);margin-bottom:30px;line-height:1.6;">
+        エラー情報を収集しています。その後、再起動します。<br>
+        （本当に大変な状況です。少々お待ちください。）
+      </div>
+      <div style="font-size:22px;margin-bottom:10px;" id="bsod-full-pct">0%完了</div>
+      <div style="background:rgba(255,255,255,0.2);border-radius:4px;height:12px;width:100%;margin-bottom:20px;">
+        <div id="bsod-full-bar" style="background:#fff;height:12px;border-radius:4px;width:0%;transition:width 1s;"></div>
+      </div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.7);">
+        詳細については、後でオンラインでこのエラーを検索できます:<br>
+        <strong>CRITICAL_PROCESS_DIED</strong><br><br>
+        推定復旧時間: <span id="bsod-full-remain">計算中...</span>
+      </div>
+    </div>
+    <div style="position:fixed;bottom:20px;right:20px;font-size:11px;color:rgba(255,255,255,0.4);">
+      Saborhythm Cloud v1.0.0 | 偽装モード: ACTIVE<br>
+      <span style="font-size:10px;">（Escキーで解除 ※緊急時のみ）</span>
+    </div>
+  </div>
+  <!-- Mac Kernel Panic -->
+  <div id="bsod-mac" style="display:none;background:#000;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;padding:40px;">
+    <div style="max-width:560px;width:100%;text-align:center;">
+      <div style="font-size:64px;margin-bottom:20px;">🍎</div>
+      <div style="font-size:18px;font-weight:700;margin-bottom:20px;">コンピュータを再起動する必要があります。電源ボタンを押し続けるか、再起動してください。</div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:24px;font-family:monospace;text-align:left;background:#111;padding:16px;border-radius:8px;line-height:1.6;">
+        panic(cpu 3 caller 0xffffff802b3c1234): "SABOR_PROCESS_TERMINATED"<br>
+        Backtrace (CPU 3):<br>
+        0xffffff9023a4 : 0xffffff802b3c1234<br>
+        0xffffff9023b0 : SaborhythmKext(loaded)<br>
+        <span id="mac-panic-dots">................................</span>
+      </div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.6);">
+        復旧中: <span id="mac-recover-pct">0</span>%<br>
+        推定時間: <span id="mac-remain-text">計算中...</span>
+      </div>
+      <div style="margin-top:16px;font-size:12px;color:rgba(255,255,255,0.3);">
+        （Escキーで解除 ※本当に緊急時のみ）
+      </div>
+    </div>
+  </div>
+</div>
+
+  <script src="js/app.js"></script>
+
+</body>
+</html>
